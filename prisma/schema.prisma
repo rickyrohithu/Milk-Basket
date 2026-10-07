@@ -8,19 +8,19 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model Seller {
-  id            Int      @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   name          String
-  email         String   @unique
+  email         String        @unique
   phone         String
   password      String
   address       String
   pricePerLitre Float
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  listings      MilkListing[]
 }
 
 model Collector {
@@ -32,6 +32,7 @@ model Collector {
   region    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
 }
 
 model Buyer {
@@ -43,4 +44,42 @@ model Buyer {
   address   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model MilkListing {
+  id             Int           @id @default(autoincrement())
+  seller         Seller        @relation(fields: [sellerId], references: [id])
+  sellerId       Int
+  milkType       String
+  pricePerLitre  Float
+  availableStock Float
+  date           DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  orders         Order[]
+}
+
+model Order {
+  id          Int          @id @default(autoincrement())
+  buyer       Buyer        @relation(fields: [buyerId], references: [id])
+  buyerId     Int
+  listing     MilkListing  @relation(fields: [listingId], references: [id])
+  listingId   Int
+  collector   Collector?   @relation(fields: [collectorId], references: [id])
+  collectorId Int?
+  quantity    Float
+  status      String       @default("PENDING")
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Notification {
+  id            Int      @id @default(autoincrement())
+  recipientRole String
+  recipientId   Int
+  message       String
+  type          String
+  isRead        Boolean  @default(false)
+  createdAt     DateTime @default(now())
 }

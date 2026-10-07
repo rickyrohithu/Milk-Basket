@@ -1,28 +1,25 @@
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
 const {
-  createCollector,
   getAllCollectors,
   getCollectorById,
   updateCollector,
   deleteCollector,
 } = require('../controllers/collectorController');
-const validate = require('../middleware/validate');
-const collectorSchema = require('../validators/collectorValidator');
-
-// POST   /api/collectors  — full validation
-router.post('/', validate(collectorSchema), createCollector);
+const validate         = require('../middleware/validate');
+const collectorSchema  = require('../validators/collectorValidator');
+const { authenticate } = require('../middleware/auth');
 
 // GET    /api/collectors
-router.get('/', getAllCollectors);
+router.get('/',    authenticate, getAllCollectors);
 
 // GET    /api/collectors/:id
-router.get('/:id', getCollectorById);
+router.get('/:id', authenticate, getCollectorById);
 
-// PUT    /api/collectors/:id  — partial validation (all fields optional)
-router.put('/:id', validate(collectorSchema, true), updateCollector);
+// PUT    /api/collectors/:id
+router.put('/:id', authenticate, validate(collectorSchema, true), updateCollector);
 
 // DELETE /api/collectors/:id
-router.delete('/:id', deleteCollector);
+router.delete('/:id', authenticate, deleteCollector);
 
 module.exports = router;

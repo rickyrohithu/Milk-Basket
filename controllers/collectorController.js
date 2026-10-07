@@ -1,28 +1,14 @@
 const { prisma } = require('../config/db');
 
-// POST /api/collectors
-const createCollector = async (req, res) => {
-  try {
-    const { name, email, phone, password, region } = req.body;
-
-    const collector = await prisma.collector.create({
-      data: { name, email, phone, password, region },
-    });
-
-    res.status(201).json({ success: true, data: collector });
-  } catch (error) {
-    if (error.code === 'P2002') {
-      return res.status(409).json({ success: false, message: 'Email already in use' });
-    }
-    console.error('createCollector error:', error);
-    res.status(500).json({ success: false, message: 'Server error creating collector' });
-  }
-};
-
-// GET /api/collectors
+// GET /api/collectors — BUYER and SELLER (find their collector)
 const getAllCollectors = async (req, res) => {
+  const { role } = req.user;
+  if (role !== 'BUYER' && role !== 'SELLER') {
+    return res.status(403).json({ success: false, message: 'Access denied. Only buyers and sellers can view collectors list.' });
+  }
+
   try {
-    const collectors = await prisma.collector.findMany();
+    const collectors = await prisma.collector.findMany({ omit: { password: true } });
     res.status(200).json({ success: true, data: collectors });
   } catch (error) {
     console.error('getAllCollectors error:', error);
@@ -30,11 +16,19 @@ const getAllCollectors = async (req, res) => {
   }
 };
 
-// GET /api/collectors/:id
+// GET /api/collectors/:id — BUYER, SELLER, or COLLECTOR (own profile)
 const getCollectorById = async (req, res) => {
+  const { role, id: userId } = req.user;
+  const targetId = Number(req.params.id);
+
+  if (role === 'COLLECTOR' && userId !== targetId) {
+    return res.status(403).json({ success: false, message: 'Access denied. You can only view your own profile.' });
+  }
+
   try {
     const collector = await prisma.collector.findUnique({
-      where: { id: Number(req.params.id) },
+      where: { id: targetId },
+      omit: { password: true },
     });
 
     if (!collector) {
@@ -48,12 +42,23 @@ const getCollectorById = async (req, res) => {
   }
 };
 
-// PUT /api/collectors/:id
+// PUT /api/collectors/:id — COLLECTOR (own profile only)
 const updateCollector = async (req, res) => {
+  const { role, id: userId } = req.user;
+  const targetId = Number(req.params.id);
+
+  if (role !== 'COLLECTOR') {
+    return res.status(403).json({ success: false, message: 'Access denied. Only collectors can update a collector profile.' });
+  }
+  if (userId !== targetId) {
+    return res.status(403).json({ success: false, message: 'Access denied. You can only update your own profile.' });
+  }
+
   try {
     const collector = await prisma.collector.update({
-      where: { id: Number(req.params.id) },
+      where: { id: targetId },
       data: req.body,
+      omit: { password: true },
     });
 
     res.status(200).json({ success: true, data: collector });
@@ -66,11 +71,21 @@ const updateCollector = async (req, res) => {
   }
 };
 
-// DELETE /api/collectors/:id
+// DELETE /api/collectors/:id — COLLECTOR (own profile only)
 const deleteCollector = async (req, res) => {
+  const { role, id: userId } = req.user;
+  const targetId = Number(req.params.id);
+
+  if (role !== 'COLLECTOR') {
+    return res.status(403).json({ success: false, message: 'Access denied. Only collectors can delete a collector profile.' });
+  }
+  if (userId !== targetId) {
+    return res.status(403).json({ success: false, message: 'Access denied. You can only delete your own profile.' });
+  }
+
   try {
     await prisma.collector.delete({
-      where: { id: Number(req.params.id) },
+      where: { id: targetId },
     });
 
     res.status(200).json({ success: true, message: 'Collector deleted successfully' });
@@ -83,4 +98,4 @@ const deleteCollector = async (req, res) => {
   }
 };
 
-module.exports = { createCollector, getAllCollectors, getCollectorById, updateCollector, deleteCollector };
+module.exports = { getAllCollectors, getCollectorById, updateCollector, deleteCollector };

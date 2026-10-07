@@ -14,13 +14,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-const sellerRoutes = require('./routes/sellerRoutes');
-const buyerRoutes = require('./routes/buyerRoutes');
-const collectorRoutes = require('./routes/collectorRoutes');
+const authRoutes         = require('./routes/authRoutes');
+const sellerRoutes       = require('./routes/sellerRoutes');
+const buyerRoutes        = require('./routes/buyerRoutes');
+const collectorRoutes    = require('./routes/collectorRoutes');
+const listingRoutes      = require('./routes/listingRoutes');
+const orderRoutes        = require('./routes/orderRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
-app.use('/api/sellers', sellerRoutes);
-app.use('/api/buyers', buyerRoutes);
-app.use('/api/collectors', collectorRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/sellers',       sellerRoutes);
+app.use('/api/buyers',        buyerRoutes);
+app.use('/api/collectors',    collectorRoutes);
+app.use('/api/listings',      listingRoutes);
+app.use('/api/orders',        orderRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health Check / Root Route
 app.get('/', (req, res) => {
